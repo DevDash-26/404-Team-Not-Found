@@ -312,27 +312,30 @@ html[data-accent="violet"] {
   }
 }
 
-@keyframes sign-in-glow {
+@keyframes landing-entry-glow {
   0%,
   100% {
-    box-shadow: 0 8px 22px rgb(127 29 29 / 0.28), 0 0 0 0 rgb(245 157 155 / 0.35);
+    box-shadow: 0 8px 22px rgb(127 29 29 / 0.28), 0 0 0 0 rgb(255 82 82 / 0.35);
   }
   50% {
-    box-shadow: 0 12px 30px rgb(127 29 29 / 0.38), 0 0 0 8px rgb(245 157 155 / 0);
+    box-shadow: 0 12px 30px rgb(127 29 29 / 0.38), 0 0 0 8px rgb(255 82 82 / 0);
   }
 }
 
-.landing-sign-in {
-  animation: sign-in-glow 2.6s ease-in-out 0.8s infinite;
-  transition: transform 180ms ease, box-shadow 180ms ease;
+.landing-entry {
+  background: var(--color-brand-800);
+  color: white;
+  animation: landing-entry-glow 2.6s ease-in-out 0.8s infinite;
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
 }
 
-.landing-sign-in:hover {
+.landing-entry:hover {
   transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 14px 32px rgb(127 29 29 / 0.42);
+  background: var(--color-brand-700);
+  box-shadow: 0 14px 32px rgb(127 29 29 / 0.42), 0 0 0 8px rgb(255 82 82 / 0.18);
 }
 
-.landing-sign-in:active {
+.landing-entry:active {
   transform: translateY(0) scale(0.98);
 }
 

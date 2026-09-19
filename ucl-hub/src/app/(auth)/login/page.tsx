@@ -19,6 +19,8 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showForm, setShowForm] = useState(false);
+  const role = searchParams.get("role");
+  const demoRole = role === "student" || role === "staff" || role === "admin" ? role : undefined;
   const notice = searchParams.get("reset") ? "If that email has an account, a reset link is on its way." : null;
 
   const form = useForm({
@@ -79,6 +81,7 @@ function LoginForm() {
 
       {showDemoAccounts && (
         <DemoAccounts
+          role={demoRole}
           onPick={(email, password) => {
             form.setValues({ email, password });
             setShowForm(true);

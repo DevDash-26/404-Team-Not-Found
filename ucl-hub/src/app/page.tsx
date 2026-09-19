@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
+import { BriefcaseBusiness, GraduationCap, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -10,7 +10,7 @@ import { homeFor } from "@/lib/redirect";
 
 const SPLASH_DURATION_MS = 900;
 
-/** The public landing page keeps the entry point focused: brand, video and sign-in. */
+/** The public landing page gives each campus audience a clear entry point. */
 export default function RootPage() {
   const { status, access } = useAuth();
   const router = useRouter();
@@ -38,9 +38,15 @@ export default function RootPage() {
       )}
 
       {ready && status === "signed-out" && (
-        <div className="relative z-10 mt-10 animate-fade-in">
-          <LinkButton href="/login" size="lg" className="landing-sign-in" icon={<ArrowRight className="size-5" aria-hidden="true" />}>
-            Sign in
+        <div className="relative z-10 mt-10 grid w-full max-w-3xl gap-3 animate-fade-in sm:grid-cols-3">
+          <LinkButton href="/login?role=student" size="lg" className="landing-entry" icon={<GraduationCap className="size-5" aria-hidden="true" />}>
+            Student account
+          </LinkButton>
+          <LinkButton href="/login?role=staff" size="lg" className="landing-entry" icon={<BriefcaseBusiness className="size-5" aria-hidden="true" />}>
+            Staff account
+          </LinkButton>
+          <LinkButton href="/login?role=admin" size="lg" className="landing-entry" icon={<ShieldCheck className="size-5" aria-hidden="true" />}>
+            Admin account
           </LinkButton>
         </div>
       )}

@@ -23,8 +23,8 @@ export function visibleDemoAccounts(): DemoAccount[] {
 }
 
 /** One-click demo sign-in shortcuts, shown only in demo mode or when explicitly enabled. */
-export function DemoAccounts({ onPick }: { onPick: (email: string, password: string) => void }) {
-  const visibleAccounts = visibleDemoAccounts();
+export function DemoAccounts({ onPick, role }: { onPick: (email: string, password: string) => void; role?: "student" | "staff" | "admin" }) {
+  const visibleAccounts = visibleDemoAccounts().filter((account) => !role || account.profile.role === role);
 
   return (
     <section aria-labelledby="demo-heading" className="mt-8 rounded-xl border border-accent-200 bg-accent-50/60 p-4">

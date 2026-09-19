@@ -9,10 +9,11 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { APP } from "@/config/app";
-import { ADMIN_NAV, STUDENT_NAV, type NavGroup } from "@/config/navigation";
+import { ADMIN_NAV, ADMIN_DOCK, STUDENT_DOCK, STUDENT_NAV, type NavGroup } from "@/config/navigation";
 import { isStaffOrAdmin } from "@/lib/permissions";
 import { STAFF_ROLE_LABELS } from "@/types";
 import { cn } from "@/utils/cn";
+import { Dock } from "./Dock";
 import { EmergencyBanner } from "./EmergencyBanner";
 import { NotificationBell } from "./NotificationBell";
 import { OfflineBanner } from "./OfflineBanner";
@@ -178,11 +179,13 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
     .slice(0, 5);
   const assistantHref = area === "admin" ? "/admin/assistant" : "/assistant";
 
+  const dockItems = area === "admin" ? ADMIN_DOCK.filter((item) => !item.capability || can(item.capability)) : STUDENT_DOCK;
+
   const sidebar = (
     <div className="glass-sidebar flex h-full flex-col bg-brand-950/75">
       <div className="flex h-16 shrink-0 items-center justify-between px-5">
         <Brand area={area} />
-        <button type="button" onClick={() => setDrawerPath(null)} aria-label="Close menu" className="rounded-lg p-1.5 text-brand-200 hover:bg-white/10 lg:hidden">
+        <button type="button" onClick={() => setDrawerPath(null)} aria-label="Close menu" className="rounded-lg p-1.5 text-brand-200 hover:bg-white/10">
           <X className="size-5" aria-hidden="true" />
         </button>
       </div>
@@ -191,15 +194,13 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
   );
 
   return (
-    <div className="min-h-screen bg-slate-50/35 lg:pl-64">
+    <div className="min-h-screen">
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[70] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow-pop">
         Skip to main content
       </a>
 
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 lg:block">{sidebar}</aside>
-
       {drawerOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-50">
           <button type="button" aria-label="Close menu" className="absolute inset-0 bg-brand-950/60" onClick={() => setDrawerPath(null)} />
           <aside className="absolute inset-y-0 left-0 w-72 max-w-[85%] shadow-pop">{sidebar}</aside>
         </div>
@@ -210,7 +211,7 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
         <SystemMessageBanner />
         {area === "student" && <EmergencyBanner />}
         <header className="glass-header sticky top-0 z-20 flex h-16 items-center gap-2 px-4 sm:px-6">
-          <button type="button" onClick={() => setDrawerPath(pathname)} aria-label="Open menu" className="-ml-1 rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden">
+          <button type="button" onClick={() => setDrawerPath(pathname)} aria-label="Open menu" className="-ml-1 rounded-lg p-2 text-slate-600 hover:bg-slate-100">
             <Menu className="size-5" aria-hidden="true" />
           </button>
           {area === "admin" && <Badge tone="accent">Staff workspace</Badge>}
@@ -233,10 +234,18 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
             );
           })}
         </nav>
-        <Link href={assistantHref} className="ai-fab fixed bottom-24 right-5 z-40 flex size-14 items-center justify-center rounded-full bg-white/85 text-brand-800 shadow-pop lg:bottom-7 lg:right-7" aria-label="Open AI assistant" title="Open AI assistant">
-          <Sparkles className="size-6" aria-hidden="true" />
-        </Link>
       </div>
+
+      <Dock items={dockItems} pathname={pathname} />
+
+      <Link
+        href={area === "admin" ? "/admin/assistant" : "/assistant"}
+        aria-label="Ask the AI assistant"
+        title="Ask the AI assistant"
+        className="animate-glow fixed bottom-24 right-4 z-40 flex size-14 items-center justify-center rounded-full bg-brand-800 text-white transition-transform hover:scale-105 hover:bg-brand-700 sm:right-6"
+      >
+        <Sparkles className="size-6" aria-hidden="true" />
+      </Link>
     </div>
   );
 }

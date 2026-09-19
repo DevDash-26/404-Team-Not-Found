@@ -121,3 +121,22 @@ export const ADMIN_NAV: NavGroup[] = [
     ],
   },
 ];
+
+/** A handful of the most-used destinations, shown as icon-only shortcuts in the floating bottom dock. */
+export const STUDENT_DOCK: NavItem[] = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/announcements", label: "Announcements", icon: Megaphone },
+  { href: "/events", label: "Events", icon: CalendarDays },
+  { href: "/assistant", label: "AI Assistant", icon: Sparkles },
+  { href: "/notifications", label: "Notifications", icon: Bell },
+  { href: "/profile", label: "Profile", icon: UserRound },
+];
+
+export const ADMIN_DOCK: NavItem[] = [
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/announcements", label: "Announcements", icon: Megaphone, capability: "announcements" },
+  { href: "/admin/bookings", label: "Classroom Bookings", icon: DoorOpen, capability: "bookings" },
+  { href: "/admin/users", label: "Users", icon: Users, capability: "users" },
+  { href: "/admin/analytics", label: "Analytics", icon: BarChart3, capability: "analytics" },
+  { href: "/admin/settings", label: "Settings", icon: Settings, capability: "settings" },
+];

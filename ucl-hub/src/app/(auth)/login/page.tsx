@@ -3,12 +3,13 @@
 import { ArrowLeft, LogIn } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Button } from "@/components/ui/Button";
 import { TextInput } from "@/components/ui/Field";
 import { InlineError } from "@/components/ui/States";
 import { showDemoAccounts } from "@/config/env";
+import { DEMO_ACCOUNTS } from "@/data/demo/people";
 import { DemoAccounts } from "@/features/users/components/DemoAccounts";
 import { loginSchema } from "@/features/users/schema";
 import { useForm } from "@/hooks/useForm";
@@ -29,6 +30,15 @@ function LoginForm() {
       router.refresh();
     },
   });
+
+  useEffect(() => {
+    if (!showDemoAccounts) return;
+    const demoUid = searchParams.get("demo");
+    const account = demoUid && DEMO_ACCOUNTS.find((item) => item.uid === demoUid);
+    if (account) form.setValues({ email: account.email, password: account.password });
+    // The demo link is the only supported way to prefill a demo account.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>
@@ -67,14 +77,21 @@ function LoginForm() {
         </form>
       )}
 
+      {showDemoAccounts && (
+        <DemoAccounts
+          onPick={(email, password) => {
+            form.setValues({ email, password });
+            setShowForm(true);
+          }}
+        />
+      )}
+
       <p className="mt-6 text-center text-sm text-slate-600">
         New student?{" "}
         <Link href="/register" className="font-medium text-brand-700 hover:underline">
           Create an account
         </Link>
       </p>
-
-      {showDemoAccounts && <DemoAccounts onPick={(email, password) => form.setValues({ email, password })} />}
     </>
   );
 }

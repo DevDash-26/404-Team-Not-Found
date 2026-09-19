@@ -1,4 +1,4 @@
-import { GraduationCap } from "lucide-react";
+import Image from "next/image";
 import type { ReactNode } from "react";
 import { RedirectIfSignedIn } from "@/features/users/components/RedirectIfSignedIn";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
@@ -12,9 +12,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           <ThemeToggle />
         </div>
         <div className="flex w-full max-w-md flex-col items-center">
-          <span className="flex size-12 self-center items-center justify-center rounded-xl bg-brand-800 text-white">
-            <GraduationCap className="size-6" aria-hidden="true" />
-          </span>
+          <Image src="/ucl-logo.png" alt="Universal College Lanka logo" width={120} height={120} priority className="h-auto w-24 rounded-xl object-contain shadow-card" />
           <p className="mt-3 text-lg font-semibold text-slate-900">{APP.name}</p>
           <p className="text-sm text-slate-500">{APP.institution}</p>
           <div className="glass-panel mt-8 w-full rounded-2xl p-6 sm:p-8">{children}</div>

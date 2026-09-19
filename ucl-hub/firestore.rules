@@ -1,0 +1,501 @@
+rules_version = '2';
+
+// UCL Campus Hub - Firestore security rules.
+//
+// Principles
+//  1. Authority comes from the verified ID token's custom claims (role, staffRole,
+//     societyId). Those claims are only ever written by the server (Admin SDK).
+//     Nothing the browser sends about roles is trusted, and users cannot edit
+//     their own role: the `users` rules below allow only academic-detail fields.
+//  2. Students can read official content but never write it.
+//  3. Staff can write only the collections their group manages. The capability
+//     map below MUST match STAFF_CAPABILITIES in src/lib/permissions.ts; a unit
+//     test (permissions.test.ts) fails when the two drift apart.
+//  4. Counters and uniqueness are enforced here as well as in the app:
+//     interest counters change only together with their create-only interest
+//     document, and a room slot document can be created only once, which is what
+//     makes double booking impossible even under simultaneous requests.
+//  5. Server-only collections (assistantLogs) cannot be written from the browser.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------------------------------------------------------------- identity
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    function role() {
+      return request.auth.token.get('role', 'student');
+    }
+
+    function staffRole() {
+      return request.auth.token.get('staffRole', '');
+    }
+
+    // BEGIN capabilities (mirrors STAFF_CAPABILITIES in src/lib/permissions.ts)
+    function staffCapabilities() {
+      return {
+        'academic': ['announcements', 'events', 'calendar', 'jobs', 'faqs', 'academicSupport', 'notifications'],
+        'society': ['events', 'societies', 'notifications'],
+        'facilities': ['announcements', 'facilityIssues', 'bookings', 'rooms', 'services', 'lostFoundModeration', 'notifications'],
+        'finance': ['announcements', 'faqs', 'services', 'notifications'],
+        'it': ['announcements', 'faqs', 'services', 'facilityIssues', 'notifications']
+      }.get(staffRole(), []);
+    }
+    // END capabilities
+
+    function isAdmin() {
+      return signedIn() && role() == 'admin';
+    }
+
+    function hasCap(capability) {
+      return isAdmin() || (signedIn() && role() == 'staff' && capability in staffCapabilities());
+    }
+
+    function isSocietyRep() {
+      return signedIn() && role() == 'staff' && staffRole() == 'society';
+    }
+
+    function managesSociety(societyId) {
+      return isAdmin() || (isSocietyRep() && request.auth.token.get('societyId', '') == societyId);
+    }
+
+    // Society representatives manage only their own society's events.
+    function managesEvent(event) {
+      return hasCap('events') && (!isSocietyRep() || (event.societyId != null && managesSociety(event.societyId)));
+    }
+
+    // ----------------------------------------------------------------- helpers
+
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    function onlyChanges(keys) {
+      return changedKeys().hasOnly(keys);
+    }
+
+    function text(data, field, minLength, maxLength) {
+      return data[field] is string && data[field].size() >= minLength && data[field].size() <= maxLength;
+    }
+
+    function optionalText(data, field, maxLength) {
+      return data[field] is string && data[field].size() <= maxLength;
+    }
+
+    function wholeNumber(data, field, minValue, maxValue) {
+      return data[field] is int && data[field] >= minValue && data[field] <= maxValue;
+    }
+
+    function doc(collection, id) {
+      return /databases/$(database)/documents/$(collection)/$(id);
+    }
+
+    // ------------------------------------------------------------------- users
+
+    match /users/{userId} {
+      allow read: if signedIn() && (userId == uid() || hasCap('users'));
+
+      // A new account creates its own profile, always as a plain student.
+      allow create: if signedIn() && userId == uid()
+        && request.resource.data.keys().hasOnly(['name', 'email', 'role', 'staffRole', 'studentId', 'faculty', 'programme', 'year', 'societyId', 'department', 'createdAt'])
+        && request.resource.data.role == 'student'
+        && request.resource.data.staffRole == null
+        && request.resource.data.societyId == null
+        && request.resource.data.department == null
+        && text(request.resource.data, 'name', 2, 100)
+        && request.resource.data.email == request.auth.token.email;
+
+      // People edit their own academic details only. Role changes go through the server API.
+      allow update: if signedIn() && userId == uid()
+        && onlyChanges(['name', 'studentId', 'faculty', 'programme', 'year'])
+        && text(request.resource.data, 'name', 2, 100);
+
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------ announcements
+
+    match /announcements/{id} {
+      allow read: if signedIn();
+      allow create: if hasCap('announcements')
+        && request.resource.data.author.id == uid()
+        && text(request.resource.data, 'title', 3, 140)
+        && text(request.resource.data, 'description', 10, 4000)
+        && request.resource.data.category in ['general', 'academic', 'administrative', 'finance', 'facilities', 'it', 'events', 'safety']
+        && request.resource.data.priority in ['normal', 'important', 'emergency'];
+      allow update: if hasCap('announcements')
+        && request.resource.data.author == resource.data.author
+        && text(request.resource.data, 'title', 3, 140)
+        && text(request.resource.data, 'description', 10, 4000)
+        && request.resource.data.priority in ['normal', 'important', 'emergency'];
+      allow delete: if hasCap('announcements');
+    }
+
+    // ------------------------------------------------------------------ events
+
+    // Interest counter: it may move by exactly one, and only in step with the
+    // student's own create-only (or deleted) interest document.
+    function interestDelta(eventId) {
+      return (existsAfter(doc('eventInterests', eventId + '_' + uid())) ? 1 : 0)
+           - (exists(doc('eventInterests', eventId + '_' + uid())) ? 1 : 0);
+    }
+
+    match /events/{eventId} {
+      allow read: if signedIn();
+
+      allow create: if hasCap('events')
+        && (!isSocietyRep() || managesSociety(request.resource.data.societyId))
+        && request.resource.data.createdBy.id == uid()
+        && request.resource.data.interestCount == 0
+        && text(request.resource.data, 'title', 3, 140)
+        && text(request.resource.data, 'description', 10, 4000)
+        && text(request.resource.data, 'location', 2, 200)
+        && request.resource.data.startsAt is string
+        && request.resource.data.endsAt is string
+        && request.resource.data.startsAt < request.resource.data.endsAt
+        && wholeNumber(request.resource.data, 'capacity', 0, 100000);
+
+      allow update:
+        // Organisers edit the event but never the counter.
+        if (managesEvent(resource.data)
+            && request.resource.data.interestCount == resource.data.interestCount
+            && request.resource.data.societyId == resource.data.societyId
+            && request.resource.data.createdBy == resource.data.createdBy
+            && request.resource.data.startsAt < request.resource.data.endsAt)
+        // Anyone signed in may register or cancel their own interest, nothing else.
+        || (signedIn()
+            && onlyChanges(['interestCount'])
+            && interestDelta(eventId) != 0
+            && request.resource.data.interestCount == resource.data.interestCount + interestDelta(eventId)
+            && request.resource.data.interestCount >= 0
+            && (resource.data.capacity == 0 || request.resource.data.interestCount <= resource.data.capacity));
+
+      allow delete: if managesEvent(resource.data);
+    }
+
+    match /eventInterests/{interestId} {
+      allow read: if signedIn() && (resource.data.userId == uid() || hasCap('events'));
+
+      // One document per student per event (the id encodes both), counted in the same commit.
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['eventId', 'userId', 'createdAt'])
+        && request.resource.data.userId == uid()
+        && interestId == request.resource.data.eventId + '_' + uid()
+        && getAfter(doc('events', request.resource.data.eventId)).data.interestCount
+           == get(doc('events', request.resource.data.eventId)).data.interestCount + 1;
+
+      allow update: if false;
+
+      allow delete: if hasCap('events')
+        || (signedIn() && resource.data.userId == uid()
+            && getAfter(doc('events', resource.data.eventId)).data.interestCount
+               == get(doc('events', resource.data.eventId)).data.interestCount - 1);
+    }
+
+    // --------------------------------------------------------------- societies
+
+    function societyInterestDelta(societyId) {
+      return (existsAfter(doc('societyInterests', societyId + '_' + uid())) ? 1 : 0)
+           - (exists(doc('societyInterests', societyId + '_' + uid())) ? 1 : 0);
+    }
+
+    match /societies/{societyId} {
+      allow read: if signedIn();
+      allow create: if isAdmin() && request.resource.data.interestCount == 0
+        && text(request.resource.data, 'name', 3, 100);
+      allow update:
+        if (managesSociety(societyId) && hasCap('societies')
+            && request.resource.data.interestCount == resource.data.interestCount
+            && text(request.resource.data, 'name', 3, 100)
+            && text(request.resource.data, 'description', 10, 4000))
+        || (signedIn()
+            && onlyChanges(['interestCount'])
+            && societyInterestDelta(societyId) != 0
+            && request.resource.data.interestCount == resource.data.interestCount + societyInterestDelta(societyId)
+            && request.resource.data.interestCount >= 0);
+      allow delete: if isAdmin();
+    }
+
+    match /societyInterests/{interestId} {
+      // Students read their own requests; a society's committee reads the requests for their society.
+      allow read: if signedIn() && (resource.data.userId == uid() || managesSociety(resource.data.societyId));
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['societyId', 'userId', 'userName', 'message', 'createdAt'])
+        && request.resource.data.userId == uid()
+        && interestId == request.resource.data.societyId + '_' + uid()
+        && optionalText(request.resource.data, 'message', 500)
+        && getAfter(doc('societies', request.resource.data.societyId)).data.interestCount
+           == get(doc('societies', request.resource.data.societyId)).data.interestCount + 1;
+
+      allow update: if false;
+
+      allow delete: if signedIn() && resource.data.userId == uid()
+        && getAfter(doc('societies', resource.data.societyId)).data.interestCount
+           == get(doc('societies', resource.data.societyId)).data.interestCount - 1;
+    }
+
+    // -------------------------------------------------------------- lost & found
+
+    match /lostFound/{itemId} {
+      allow read: if signedIn();
+
+      allow create: if signedIn()
+        && request.resource.data.reporter.id == uid()
+        && request.resource.data.status == 'open'
+        && request.resource.data.type in ['lost', 'found']
+        && text(request.resource.data, 'title', 3, 140)
+        && text(request.resource.data, 'description', 5, 4000)
+        && text(request.resource.data, 'location', 2, 200);
+
+      // The reporter or a moderator may only change the status, following the allowed moves.
+      allow update: if signedIn()
+        && (resource.data.reporter.id == uid() || hasCap('lostFoundModeration'))
+        && onlyChanges(['status'])
+        && ((resource.data.status == 'open' && request.resource.data.status in ['claimed', 'resolved'])
+            || (resource.data.status == 'claimed' && request.resource.data.status in ['open', 'resolved']));
+
+      allow delete: if signedIn() && (resource.data.reporter.id == uid() || hasCap('lostFoundModeration'));
+    }
+
+    // ----------------------------------------------------- rooms, slots, bookings
+
+    match /rooms/{roomId} {
+      allow read: if signedIn();
+      allow create, update: if hasCap('rooms')
+        && text(request.resource.data, 'name', 2, 100)
+        && wholeNumber(request.resource.data, 'capacity', 1, 2000)
+        && request.resource.data.active is bool;
+      allow delete: if hasCap('rooms');
+    }
+
+    // One document per room per half hour. Create-only: creating an existing
+    // slot is an update, which is denied, so a second booking for the same time fails.
+    match /roomSlots/{slotId} {
+      allow read: if signedIn();
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['roomId', 'date', 'slot', 'bookingId'])
+        && slotId == request.resource.data.roomId + '_' + request.resource.data.date + '_' + request.resource.data.slot
+        && !exists(doc('bookings', request.resource.data.bookingId))
+        && existsAfter(doc('bookings', request.resource.data.bookingId))
+        && getAfter(doc('bookings', request.resource.data.bookingId)).data.requester.id == uid()
+        && getAfter(doc('bookings', request.resource.data.bookingId)).data.roomId == request.resource.data.roomId
+        && getAfter(doc('bookings', request.resource.data.bookingId)).data.date == request.resource.data.date
+        && slotId in getAfter(doc('bookings', request.resource.data.bookingId)).data.slots;
+
+      allow update: if false;
+
+      // Slots are freed only when their booking is cancelled or rejected in the same commit.
+      allow delete: if signedIn()
+        && (hasCap('bookings') || get(doc('bookings', resource.data.bookingId)).data.requester.id == uid())
+        && getAfter(doc('bookings', resource.data.bookingId)).data.status in ['cancelled', 'rejected'];
+    }
+
+    match /bookings/{bookingId} {
+      allow read: if signedIn() && (resource.data.requester.id == uid() || hasCap('bookings'));
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['roomId', 'roomName', 'requester', 'date', 'startTime', 'endTime', 'attendees', 'purpose', 'status', 'slots', 'decisionNote', 'decidedBy', 'createdAt', 'updatedAt'])
+        && request.resource.data.requester.id == uid()
+        && request.resource.data.status == 'pending'
+        && request.resource.data.decisionNote == ''
+        && request.resource.data.decidedBy == null
+        && request.resource.data.slots is list
+        && request.resource.data.slots.size() >= 1
+        && request.resource.data.slots.size() <= 16
+        && existsAfter(doc('roomSlots', request.resource.data.slots[0]))
+        && text(request.resource.data, 'purpose', 3, 200)
+        && wholeNumber(request.resource.data, 'attendees', 1, 2000)
+        && get(doc('rooms', request.resource.data.roomId)).data.active == true
+        && request.resource.data.attendees <= get(doc('rooms', request.resource.data.roomId)).data.capacity;
+
+      allow update:
+        // The requester may only cancel their own pending or approved booking.
+        if (resource.data.requester.id == uid()
+            && onlyChanges(['status', 'updatedAt'])
+            && resource.data.status in ['pending', 'approved']
+            && request.resource.data.status == 'cancelled')
+        // Staff decide or cancel; they cannot rewrite the request itself.
+        || (hasCap('bookings')
+            && onlyChanges(['status', 'decisionNote', 'decidedBy', 'updatedAt'])
+            && ((resource.data.status == 'pending' && request.resource.data.status in ['approved', 'rejected', 'cancelled'])
+                || (resource.data.status == 'approved' && request.resource.data.status == 'cancelled'))
+            && request.resource.data.decidedBy.id == uid());
+
+      allow delete: if false;
+    }
+
+    // ---------------------------------------------------------- facility issues
+
+    match /facilityIssues/{issueId} {
+      allow read: if signedIn() && (resource.data.reporter.id == uid() || hasCap('facilityIssues'));
+
+      allow create: if signedIn()
+        && request.resource.data.reporter.id == uid()
+        && request.resource.data.status == 'submitted'
+        && request.resource.data.assignedTo == null
+        && request.resource.data.updates is list
+        && request.resource.data.updates.size() == 1
+        && request.resource.data.priority in ['low', 'medium', 'high', 'urgent']
+        && text(request.resource.data, 'location', 2, 200)
+        && text(request.resource.data, 'description', 5, 2000);
+
+      // Staff move an issue one step forward and append exactly one history entry.
+      allow update: if hasCap('facilityIssues')
+        && onlyChanges(['status', 'assignedTo', 'updates', 'updatedAt'])
+        && request.resource.data.updates.size() == resource.data.updates.size() + 1
+        && ((resource.data.status == 'submitted' && request.resource.data.status == 'assigned')
+            || (resource.data.status == 'assigned' && request.resource.data.status in ['in-progress', 'resolved'])
+            || (resource.data.status == 'in-progress' && request.resource.data.status == 'resolved'));
+
+      allow delete: if isAdmin();
+    }
+
+    // -------------------------------------------------------- academic support
+
+    match /supportRequests/{requestId} {
+      allow read: if signedIn() && (resource.data.requester.id == uid() || hasCap('academicSupport'));
+
+      allow create: if signedIn()
+        && request.resource.data.requester.id == uid()
+        && request.resource.data.status == 'open'
+        && request.resource.data.matchedWith == null
+        && request.resource.data.staffNote == ''
+        && request.resource.data.type in ['peer-tutoring', 'study-group', 'mentorship']
+        && text(request.resource.data, 'subject', 3, 120)
+        && text(request.resource.data, 'description', 10, 2000);
+
+      allow update:
+        // A student can withdraw their own request.
+        if (resource.data.requester.id == uid()
+            && onlyChanges(['status', 'updatedAt'])
+            && request.resource.data.status == 'closed')
+        // Academic staff match or close requests.
+        || (hasCap('academicSupport')
+            && onlyChanges(['status', 'matchedWith', 'staffNote', 'updatedAt'])
+            && request.resource.data.status in ['open', 'matched', 'closed']
+            && optionalText(request.resource.data, 'staffNote', 500));
+
+      allow delete: if isAdmin();
+    }
+
+    // ------------------------------------------------- official reference content
+
+    match /calendar/{id} {
+      allow read: if signedIn();
+      allow create, update: if hasCap('calendar')
+        && text(request.resource.data, 'title', 3, 140)
+        && request.resource.data.startDate is string
+        && request.resource.data.endDate is string
+        && request.resource.data.startDate <= request.resource.data.endDate;
+      allow delete: if hasCap('calendar');
+    }
+
+    match /jobs/{id} {
+      allow read: if signedIn();
+      allow create, update: if hasCap('jobs')
+        && text(request.resource.data, 'position', 3, 140)
+        && text(request.resource.data, 'company', 2, 100)
+        && text(request.resource.data, 'description', 10, 4000)
+        && request.resource.data.applyUrl.matches('^https?://.+');
+      allow delete: if hasCap('jobs');
+    }
+
+    match /faqs/{id} {
+      allow read: if signedIn();
+      allow create, update: if hasCap('faqs')
+        && text(request.resource.data, 'question', 5, 200)
+        && text(request.resource.data, 'answer', 10, 4000);
+      allow delete: if hasCap('faqs');
+    }
+
+    match /services/{id} {
+      allow read: if signedIn();
+      allow create, update: if hasCap('services')
+        && text(request.resource.data, 'name', 2, 100)
+        && text(request.resource.data, 'description', 10, 4000);
+      allow delete: if hasCap('services');
+    }
+
+    match /staffDirectory/{id} {
+      allow read: if signedIn();
+      allow create, update: if hasCap('staffDirectory')
+        && text(request.resource.data, 'name', 2, 100)
+        && text(request.resource.data, 'department', 2, 100);
+      allow delete: if hasCap('staffDirectory');
+    }
+
+    // ----------------------------------------------------------- notifications
+
+    match /notifications/{id} {
+      // Personal notifications and broadcasts; staff who send notifications can list everything.
+      allow read: if signedIn()
+        && (resource.data.recipientId == null || resource.data.recipientId == uid() || hasCap('notifications'));
+
+      allow create: if hasCap('notifications')
+        && request.resource.data.keys().hasOnly(['title', 'body', 'type', 'link', 'recipientId', 'audience', 'createdBy', 'createdAt'])
+        && request.resource.data.createdBy == uid()
+        && text(request.resource.data, 'title', 1, 140)
+        && text(request.resource.data, 'body', 1, 240);
+
+      allow update: if false;
+      allow delete: if hasCap('notifications');
+    }
+
+    // Read receipts: one document per person per notification, written only by that person.
+    match /notificationReads/{readId} {
+      allow read: if signedIn() && resource.data.userId == uid();
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasOnly(['userId', 'notificationId', 'readAt'])
+        && request.resource.data.userId == uid()
+        && readId == uid() + '_' + request.resource.data.notificationId;
+      allow delete: if false;
+    }
+
+    // ---------------------------------------------------------------- feedback
+
+    match /feedback/{id} {
+      allow read: if hasCap('feedback');
+
+      allow create: if signedIn()
+        && request.resource.data.from.id == uid()
+        && request.resource.data.status == 'new'
+        && request.resource.data.category in ['suggestion', 'content-issue', 'bug', 'question', 'other']
+        && text(request.resource.data, 'message', 5, 2000);
+
+      allow update: if hasCap('feedback') && onlyChanges(['status']);
+      allow delete: if hasCap('feedback');
+    }
+
+    // ------------------------------------------------- AI assistant and settings
+
+    // Extra knowledge the assistant may use. The API route reads it with the Admin SDK.
+    match /knowledge/{id} {
+      allow read, write: if hasCap('knowledge');
+    }
+
+    // Anonymous question log. Written only by the server; administrators read it.
+    match /assistantLogs/{id} {
+      allow read: if hasCap('analytics') || hasCap('knowledge');
+      allow write: if false;
+    }
+
+    match /settings/{id} {
+      allow read: if signedIn();
+      allow write: if hasCap('settings') && id == 'app';
+    }
+
+    // Everything else is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

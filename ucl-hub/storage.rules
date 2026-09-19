@@ -1,0 +1,43 @@
+rules_version = '2';
+
+// UCL Campus Hub - Cloud Storage security rules.
+//
+//   uploads/{uid}/...   photos students attach to lost & found posts and facility reports.
+//                       Only the owner may write, images only, at most 5 MB.
+//   content/...         official images and attachments (events, societies, announcements).
+//                       Only staff and administrators may write. Students never can.
+// Everyone signed in can read; everything else is closed.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isStaffOrAdmin() {
+      return signedIn() && request.auth.token.get('role', 'student') in ['staff', 'admin'];
+    }
+
+    match /uploads/{userId}/{allPaths=**} {
+      allow read: if signedIn();
+      allow create, update: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.contentType.matches('image/.*')
+        && request.resource.size < 5 * 1024 * 1024;
+      allow delete: if signedIn() && request.auth.uid == userId;
+    }
+
+    match /content/{allPaths=**} {
+      allow read: if signedIn();
+      allow create, update: if isStaffOrAdmin()
+        && request.resource.size < 10 * 1024 * 1024
+        && (request.resource.contentType.matches('image/.*') || request.resource.contentType == 'application/pdf');
+      allow delete: if isStaffOrAdmin();
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

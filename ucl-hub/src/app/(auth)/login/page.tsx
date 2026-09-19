@@ -1,0 +1,68 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { Button } from "@/components/ui/Button";
+import { TextInput } from "@/components/ui/Field";
+import { InlineError } from "@/components/ui/States";
+import { showDemoAccounts } from "@/config/env";
+import { DemoAccounts } from "@/features/users/components/DemoAccounts";
+import { loginSchema } from "@/features/users/schema";
+import { useForm } from "@/hooks/useForm";
+
+function LoginForm() {
+  const { signIn } = useAuth();
+  const router = useRouter();
+  const notice = useSearchParams().get("reset") ? "If that email has an account, a reset link is on its way." : null;
+
+  const form = useForm({
+    initial: { email: "", password: "" },
+    schema: loginSchema,
+    // Navigation happens in RedirectIfSignedIn once the session is established.
+    onSubmit: async ({ email, password }) => {
+      await signIn(email, password);
+      router.refresh();
+    },
+  });
+
+  return (
+    <>
+      <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Welcome back</h1>
+      <p className="mt-1 text-sm text-slate-600">Sign in with your UCL account.</p>
+
+      <form onSubmit={form.submit} noValidate className="mt-6 space-y-4">
+        {notice && <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{notice}</p>}
+        <InlineError message={form.formError} />
+        <TextInput label="Email" type="email" autoComplete="email" inputMode="email" required {...form.bind("email")} />
+        <TextInput label="Password" type="password" autoComplete="current-password" required {...form.bind("password")} />
+        <div className="flex justify-end">
+          <Link href="/forgot-password" className="text-sm font-medium text-brand-700 hover:underline">
+            Forgot password?
+          </Link>
+        </div>
+        <Button type="submit" size="lg" className="w-full" loading={form.submitting}>
+          Sign in
+        </Button>
+      </form>
+
+      <p className="mt-6 text-center text-sm text-slate-600">
+        New student?{" "}
+        <Link href="/register" className="font-medium text-brand-700 hover:underline">
+          Create an account
+        </Link>
+      </p>
+
+      {showDemoAccounts && <DemoAccounts onPick={(email, password) => form.setValues({ email, password })} />}
+    </>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}

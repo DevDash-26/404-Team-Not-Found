@@ -86,7 +86,7 @@ export const AI = {
 } as const;
 
 export const STORAGE_KEYS = {
-  memoryDb: "ucl-hub:memory-db:v1",
+  memoryDb: "ucl-hub:memory-db:v4",
   memorySession: "ucl-hub:memory-session:v1",
   assistantChat: "ucl-hub:assistant-chat:v1",
 } as const;

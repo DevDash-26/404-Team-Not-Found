@@ -306,11 +306,6 @@ export function buildNotifications({ at }: DemoContext): DemoCollection {
     broadcast("nt-registration", "announcement", "Semester 2 registration closes Friday", "Register before 5:00 PM on Friday to avoid late fees.", "/announcements", "u-academic", at(-1, "09:01")),
     broadcast("nt-fees", "announcement", "Tuition instalment reminder", "The second instalment is due next Thursday.", "/announcements", "u-finance", at(-2, "11:01")),
     broadcast("nt-job", "job", "New internship: Software Engineering Intern", "Lanka Digital Labs is hiring interns. Applications close in 18 days.", "/jobs", "u-academic", at(-2, "09:01")),
-    broadcast("nt-event", "event", "Guest lecture: Responsible AI in practice", "Open to all faculties, in two days at the Auditorium.", "/events", "u-academic", at(-9, "09:31")),
-    broadcast("nt-se", "announcement", "SE Year 2: group project teams published", "Check your team and supervisor on the module page.", "/announcements", "u-academic", at(-1, "14:21"), { faculties: ["computing"], programmes: ["Software Engineering"], years: [2] }),
-    personal("nt-booking", "booking", "Booking approved: B201 Study Room", "Your booking for B201 Study Room has been approved. Please leave the room tidy.", "/classrooms", "u-facilities", at(-1, "10:00"), "u-student1"),
-    personal("nt-facility", "facility", "Update on your facility report", "Your report about the air conditioner in C302 is now In Progress.", "/facilities", "u-facilities", at(-1, "11:16"), "u-student1"),
-    personal("nt-support", "support", "You've been matched with a peer tutor", "Hiruni Madushani will contact you about Database normalisation.", "/academic-support", "u-academic", at(-4, "14:01"), "u-student1"),
   ];
   return toCollection(items);
 }

@@ -78,6 +78,7 @@ export const STUDENT_NAV: NavGroup[] = [
       { href: "/faqs", label: "FAQs", icon: CircleHelp },
       { href: "/feedback", label: "Feedback", icon: MessageSquareText },
       { href: "/profile", label: "Profile", icon: UserRound },
+      { href: "/settings", label: "Settings", icon: Settings },
     ],
   },
 ];

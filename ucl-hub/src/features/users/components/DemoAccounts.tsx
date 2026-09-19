@@ -1,16 +1,31 @@
 "use client";
 
-import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "@/data/demo/people";
+import { DEMO_ACCOUNTS, DEMO_PASSWORD, type DemoAccount } from "@/data/demo/people";
 import { STAFF_ROLE_LABELS } from "@/types";
 
-function labelFor(role: string, staffRole: keyof typeof STAFF_ROLE_LABELS | null): string {
+export function labelFor(role: string, staffRole: keyof typeof STAFF_ROLE_LABELS | null): string {
   if (role === "admin") return "Administrator";
   if (role === "staff" && staffRole) return STAFF_ROLE_LABELS[staffRole];
   return "Student";
 }
 
+// Only the first two student demo accounts are shown to keep pickers short.
+const MAX_STUDENT_ACCOUNTS = 2;
+
+/** The demo accounts shown to visitors: every staff/admin account, plus a couple of students. */
+export function visibleDemoAccounts(): DemoAccount[] {
+  let studentCount = 0;
+  return DEMO_ACCOUNTS.filter((account) => {
+    if (account.profile.role !== "student") return true;
+    studentCount += 1;
+    return studentCount <= MAX_STUDENT_ACCOUNTS;
+  });
+}
+
 /** One-click demo sign-in shortcuts, shown only in demo mode or when explicitly enabled. */
 export function DemoAccounts({ onPick }: { onPick: (email: string, password: string) => void }) {
+  const visibleAccounts = visibleDemoAccounts();
+
   return (
     <section aria-labelledby="demo-heading" className="mt-8 rounded-xl border border-accent-200 bg-accent-50/60 p-4">
       <h2 id="demo-heading" className="text-sm font-semibold text-accent-700">
@@ -20,7 +35,7 @@ export function DemoAccounts({ onPick }: { onPick: (email: string, password: str
         Choose one to fill the form. Password for all: <code className="rounded bg-white px-1 py-0.5 font-mono text-[11px]">{DEMO_PASSWORD}</code>
       </p>
       <ul className="mt-3 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-        {DEMO_ACCOUNTS.map((account) => (
+        {visibleAccounts.map((account) => (
           <li key={account.uid}>
             <button
               type="button"

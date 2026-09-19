@@ -16,7 +16,7 @@ export const APP = {
 
 export const PAGINATION = {
   /** Cards/rows fetched per page on student-facing lists. */
-  pageSize: 12,
+  pageSize: 6,
   /** Rows per page in admin tables. */
   adminPageSize: 20,
   /**

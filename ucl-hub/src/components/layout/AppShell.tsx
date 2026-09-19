@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { APP } from "@/config/app";
 import { ADMIN_NAV, STUDENT_NAV, type NavGroup } from "@/config/navigation";
 import { isStaffOrAdmin } from "@/lib/permissions";
@@ -120,8 +121,8 @@ function UserMenu({ area }: { area: Area }) {
         <ChevronDown className="hidden size-4 text-slate-400 sm:block" aria-hidden="true" />
       </button>
       {open && (
-        <div role="menu" className="absolute right-0 z-40 mt-2 w-64 rounded-xl border border-slate-200 bg-white p-1.5 shadow-pop">
-          <div className="border-b border-slate-100 px-3 py-2">
+        <div role="menu" className="absolute right-0 z-40 mt-2 w-64 rounded-xl border border-slate-200 bg-white p-1.5 shadow-pop dark:border-slate-700">
+          <div className="border-b border-slate-100 px-3 py-2 dark:border-slate-800">
             <p className="truncate text-sm font-medium text-slate-900">{profile.name}</p>
             <p className="truncate text-xs text-slate-500">{profile.email}</p>
             <Badge tone="brand" className="mt-1.5">
@@ -147,7 +148,7 @@ function UserMenu({ area }: { area: Area }) {
             type="button"
             onClick={async () => {
               await signOut();
-              router.replace("/login");
+              router.replace("/");
             }}
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
           >
@@ -215,6 +216,7 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
               Ask AI
             </Link>
           )}
+          <ThemeToggle />
           <NotificationBell />
           <UserMenu area={area} />
         </header>

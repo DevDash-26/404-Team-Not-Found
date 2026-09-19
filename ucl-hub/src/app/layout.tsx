@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { AppProviders } from "@/components/providers/AppProviders";
+import { THEME_INIT_SCRIPT } from "@/components/providers/ThemeProvider";
 import { APP } from "@/config/app";
 import "./globals.css";
 
@@ -12,12 +13,15 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#13253f",
+  themeColor: "#2e0a0a",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" data-scroll-behavior="smooth">
+    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body>
         <AppProviders>{children}</AppProviders>
       </body>

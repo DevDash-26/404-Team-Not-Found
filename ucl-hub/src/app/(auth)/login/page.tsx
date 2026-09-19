@@ -1,13 +1,15 @@
 "use client";
 
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Button } from "@/components/ui/Button";
 import { TextInput } from "@/components/ui/Field";
 import { InlineError } from "@/components/ui/States";
 import { showDemoAccounts } from "@/config/env";
+import { DEMO_ACCOUNTS } from "@/data/demo/people";
 import { DemoAccounts } from "@/features/users/components/DemoAccounts";
 import { loginSchema } from "@/features/users/schema";
 import { useForm } from "@/hooks/useForm";
@@ -15,7 +17,8 @@ import { useForm } from "@/hooks/useForm";
 function LoginForm() {
   const { signIn } = useAuth();
   const router = useRouter();
-  const notice = useSearchParams().get("reset") ? "If that email has an account, a reset link is on its way." : null;
+  const searchParams = useSearchParams();
+  const notice = searchParams.get("reset") ? "If that email has an account, a reset link is on its way." : null;
 
   const form = useForm({
     initial: { email: "", password: "" },
@@ -27,8 +30,21 @@ function LoginForm() {
     },
   });
 
+  useEffect(() => {
+    if (!showDemoAccounts) return;
+    const demoUid = searchParams.get("demo");
+    const account = demoUid && DEMO_ACCOUNTS.find((a) => a.uid === demoUid);
+    if (account) form.setValues({ email: account.email, password: account.password });
+    // Only run once, when the page is opened from a demo account link.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <>
+      <Link href="/" className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900">
+        <ArrowLeft className="size-4" aria-hidden="true" />
+        Back
+      </Link>
       <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Welcome back</h1>
       <p className="mt-1 text-sm text-slate-600">Sign in with your UCL account.</p>
 

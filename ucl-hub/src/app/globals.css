@@ -1,36 +1,67 @@
 @import "tailwindcss";
 
+/* Lets us write `dark:` utilities that respond to a `.dark` class on <html>, toggled manually. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /*
- * Design tokens. A deep navy brand colour with a warm gold accent, on a calm
- * neutral background. Everything else in the app uses these tokens through
- * Tailwind utilities (bg-brand-800, text-accent-700, ...).
+ * Design tokens. A red brand colour with a black/graphite accent.
+ * Everything else in the app uses these tokens through Tailwind utilities
+ * (bg-brand-800, text-accent-700, ...). Light mode pairs red with white,
+ * dark mode pairs red with black (see the `.dark` overrides below).
  */
 @theme {
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
-  --color-brand-50: #f0f5fb;
-  --color-brand-100: #dbe6f4;
-  --color-brand-200: #b9cde9;
-  --color-brand-300: #8aabd8;
-  --color-brand-400: #5a85c2;
-  --color-brand-500: #3a68a8;
-  --color-brand-600: #2b5288;
-  --color-brand-700: #234270;
-  --color-brand-800: #1c3557;
-  --color-brand-900: #13253f;
-  --color-brand-950: #0b1729;
+  --color-brand-50: #fef2f2;
+  --color-brand-100: #fde2e1;
+  --color-brand-200: #fbc5c4;
+  --color-brand-300: #f59d9b;
+  --color-brand-400: #ec6b68;
+  --color-brand-500: #dc2626;
+  --color-brand-600: #b91c1c;
+  --color-brand-700: #991b1b;
+  --color-brand-800: #7f1d1d;
+  --color-brand-900: #641515;
+  --color-brand-950: #2e0a0a;
 
-  --color-accent-50: #fdf8e8;
-  --color-accent-100: #faedc2;
-  --color-accent-200: #f5dc8a;
-  --color-accent-300: #efc84f;
-  --color-accent-400: #e8b52a;
-  --color-accent-500: #d19a13;
-  --color-accent-600: #b17a0d;
-  --color-accent-700: #8c5b0e;
+  --color-accent-50: #f5f5f5;
+  --color-accent-100: #e5e5e5;
+  --color-accent-200: #d4d4d4;
+  --color-accent-300: #a3a3a3;
+  --color-accent-400: #737373;
+  --color-accent-500: #525252;
+  --color-accent-600: #404040;
+  --color-accent-700: #262626;
 
   --shadow-card: 0 1px 2px rgb(16 24 40 / 0.05), 0 1px 3px rgb(16 24 40 / 0.06);
   --shadow-pop: 0 12px 32px -8px rgb(16 24 40 / 0.25);
+}
+
+:root {
+  color-scheme: light;
+}
+
+/*
+ * Dark mode: re-point Tailwind's built-in neutral palette (white/black/slate-*)
+ * so every existing `bg-white`, `text-slate-900`, `border-slate-200`, etc.
+ * class across the app automatically becomes black-on-white's inverse,
+ * without having to touch every component.
+ */
+.dark {
+  color-scheme: dark;
+  --color-white: #0a0a0a;
+  --color-black: #ffffff;
+  --color-slate-50: #171717;
+  --color-slate-100: #1f1f1f;
+  --color-slate-200: #2a2a2a;
+  --color-slate-300: #3a3a3a;
+  --color-slate-400: #71717a;
+  --color-slate-500: #8f8f97;
+  --color-slate-600: #a8a8b0;
+  --color-slate-700: #c7c7cd;
+  --color-slate-800: #e4e4e7;
+  --color-slate-900: #f4f4f5;
+  --color-slate-950: #fafafa;
 }
 
 @layer base {
@@ -74,4 +105,38 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+@keyframes logo-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-logo-in {
+  animation: logo-in 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out both;
 }

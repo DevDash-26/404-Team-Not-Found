@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronDown, GraduationCap, LogOut, Menu, ShieldCheck, Sparkles, X } from "lucide-react";
+import Image from "next/image";
+import { ChevronDown, LogOut, Menu, ShieldCheck, Sparkles, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -35,8 +36,8 @@ function roleLabel(role: string, staffRole: keyof typeof STAFF_ROLE_LABELS | nul
 function Brand({ area }: { area: Area }) {
   return (
     <Link href={area === "admin" ? "/admin" : "/dashboard"} className="flex items-center gap-2.5">
-      <span className="flex size-9 items-center justify-center rounded-lg bg-accent-400 text-brand-950">
-        <GraduationCap className="size-5" aria-hidden="true" />
+      <span className="flex size-9 items-center justify-center overflow-hidden rounded-lg bg-accent-400 text-brand-950">
+        <Image src="/ucl-logo.png" alt="UCL logo" width={36} height={36} className="size-9 object-cover" />
       </span>
       <span className="leading-tight">
         <span className="block text-sm font-semibold text-white">{APP.name}</span>

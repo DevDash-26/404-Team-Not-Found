@@ -210,7 +210,7 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
         <OfflineBanner />
         <SystemMessageBanner />
         {area === "student" && <EmergencyBanner />}
-        <header className="glass-header sticky top-0 z-20 flex h-16 items-center gap-2 px-4 sm:px-6">
+        <header className="glass-header sticky top-3 z-20 mx-3 flex h-16 items-center gap-2 rounded-2xl px-4 sm:mx-6 sm:px-6">
           <button type="button" onClick={() => setDrawerPath(pathname)} aria-label="Open menu" className="-ml-1 rounded-lg p-2 text-slate-600 hover:bg-slate-100">
             <Menu className="size-5" aria-hidden="true" />
           </button>

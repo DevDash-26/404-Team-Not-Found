@@ -1,12 +1,11 @@
 "use client";
 
-import { ArrowRight, GraduationCap } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { VideoBackground } from "@/components/layout/VideoBackground";
 import { LinkButton } from "@/components/ui/Button";
-import { APP } from "@/config/app";
 import { homeFor } from "@/lib/redirect";
 
 const SPLASH_DURATION_MS = 900;
@@ -31,11 +30,7 @@ export default function RootPage() {
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-10 text-center">
       <VideoBackground />
       <div className="relative z-10 flex flex-col items-center">
-        <span className="flex size-16 items-center justify-center rounded-2xl bg-brand-800 text-white shadow-pop animate-logo-in">
-          <GraduationCap className="size-8" aria-hidden="true" />
-        </span>
-        <p className="mt-4 text-lg font-semibold text-white drop-shadow animate-logo-in">{APP.name}</p>
-        <p className="text-sm text-white/80 drop-shadow animate-logo-in">{APP.institution}</p>
+        <h1 className="oneuni-wordmark animate-logo-in">OneUni</h1>
       </div>
 
       {!ready && (

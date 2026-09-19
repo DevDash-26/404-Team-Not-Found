@@ -170,6 +170,15 @@ html[data-accent="violet"] {
     backdrop-filter: blur(18px) saturate(135%);
     -webkit-backdrop-filter: blur(18px) saturate(135%);
   }
+  .oneuni-wordmark {
+    color: #ffffff;
+    font-size: clamp(3.5rem, 11vw, 7rem);
+    font-weight: 800;
+    letter-spacing: 0;
+    line-height: 0.95;
+    transform: scaleX(1.08);
+    text-shadow: 0 0 10px rgb(255 255 255 / 0.75), 0 0 28px rgb(255 255 255 / 0.5), 0 8px 30px rgb(0 0 0 / 0.3);
+  }
   .glass-sidebar,
   .glass-header,
   .glass-bottom-nav {

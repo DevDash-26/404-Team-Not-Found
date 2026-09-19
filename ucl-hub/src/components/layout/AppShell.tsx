@@ -172,9 +172,14 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
     area === "admin"
       ? ADMIN_NAV.map((group) => ({ ...group, items: group.items.filter((item) => !item.capability || can(item.capability)) }))
       : STUDENT_NAV;
+  const bottomItems = (area === "admin" ? ADMIN_NAV : STUDENT_NAV)
+    .flatMap((group) => group.items)
+    .filter((item) => !item.capability || can(item.capability))
+    .slice(0, 5);
+  const assistantHref = area === "admin" ? "/admin/assistant" : "/assistant";
 
   const sidebar = (
-    <div className="flex h-full flex-col bg-brand-900">
+    <div className="glass-sidebar flex h-full flex-col bg-brand-950/75">
       <div className="flex h-16 shrink-0 items-center justify-between px-5">
         <Brand area={area} />
         <button type="button" onClick={() => setDrawerPath(null)} aria-label="Close menu" className="rounded-lg p-1.5 text-brand-200 hover:bg-white/10 lg:hidden">
@@ -186,7 +191,7 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
   );
 
   return (
-    <div className="min-h-screen lg:pl-64">
+    <div className="min-h-screen bg-slate-50/35 lg:pl-64">
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[70] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow-pop">
         Skip to main content
       </a>
@@ -204,26 +209,33 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
         <OfflineBanner />
         <SystemMessageBanner />
         {area === "student" && <EmergencyBanner />}
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b border-slate-200 bg-white/90 px-4 backdrop-blur sm:px-6">
+        <header className="glass-header sticky top-0 z-20 flex h-16 items-center gap-2 px-4 sm:px-6">
           <button type="button" onClick={() => setDrawerPath(pathname)} aria-label="Open menu" className="-ml-1 rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden">
             <Menu className="size-5" aria-hidden="true" />
           </button>
           {area === "admin" && <Badge tone="accent">Staff workspace</Badge>}
           <div className="flex-1" />
-          {area === "student" && (
-            <Link href="/assistant" className="hidden items-center gap-1.5 rounded-lg bg-accent-50 px-3 py-1.5 text-sm font-medium text-accent-700 ring-1 ring-accent-200 hover:bg-accent-100 sm:flex">
-              <Sparkles className="size-4" aria-hidden="true" />
-              Ask AI
-            </Link>
-          )}
           <ThemeToggle />
           <NotificationBell />
           <UserMenu area={area} />
         </header>
 
-        <main id="main" className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:py-8">
+        <main id="main" className="glass-page mx-auto w-full max-w-7xl flex-1 px-4 py-6 pb-24 sm:px-6 lg:py-8 lg:pb-8">
           {children}
         </main>
+        <nav className="glass-bottom-nav fixed bottom-3 left-1/2 z-30 flex max-w-[calc(100%-1.5rem)] -translate-x-1/2 items-center gap-1 rounded-2xl px-2 py-1.5 lg:hidden" aria-label="Quick navigation">
+          {bottomItems.map((item) => {
+            const active = isActive(pathname, item.href);
+            return (
+              <Link key={item.href} href={item.href} aria-label={item.label} className={cn("flex size-9 items-center justify-center rounded-xl", active ? "bg-brand-800/10 text-brand-800" : "text-slate-600 hover:bg-white/60 hover:text-brand-800")}>
+                <item.icon className="size-[17px]" aria-hidden="true" />
+              </Link>
+            );
+          })}
+        </nav>
+        <Link href={assistantHref} className="ai-fab fixed bottom-24 right-5 z-40 flex size-14 items-center justify-center rounded-full bg-white/85 text-brand-800 shadow-pop lg:bottom-7 lg:right-7" aria-label="Open AI assistant" title="Open AI assistant">
+          <Sparkles className="size-6" aria-hidden="true" />
+        </Link>
       </div>
     </div>
   );

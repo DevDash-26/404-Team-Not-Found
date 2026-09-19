@@ -8,8 +8,8 @@
  */
 
 export const APP = {
-  name: "UCL Campus Hub",
-  shortName: "UCL Hub",
+  name: "OneUni",
+  shortName: "OneUni",
   institution: "Universal College Lanka",
   supportEmail: "hub@ucl.example",
 } as const;

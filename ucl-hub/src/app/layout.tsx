@@ -23,7 +23,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body>
-        <AppProviders>{children}</AppProviders>
+        <div className="relative z-10 min-h-screen">
+          <AppProviders>{children}</AppProviders>
+        </div>
       </body>
     </html>
   );

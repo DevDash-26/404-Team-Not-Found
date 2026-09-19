@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import type { ReactNode } from "react";
+import { AssistantWidget } from "@/components/layout/AssistantWidget";
 import { RedirectIfSignedIn } from "@/features/users/components/RedirectIfSignedIn";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { APP } from "@/config/app";
@@ -11,6 +14,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <div className="absolute right-4 top-4">
           <ThemeToggle />
         </div>
+        <AssistantWidget />
         <div className="flex w-full max-w-md flex-col items-center">
           <Image src="/ucl-logo.png" alt="Universal College Lanka logo" width={120} height={120} priority className="h-auto w-24 rounded-xl object-contain shadow-card" />
           <p className="mt-3 text-lg font-semibold text-slate-900">{APP.name}</p>

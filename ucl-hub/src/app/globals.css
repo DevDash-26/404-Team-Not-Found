@@ -339,6 +339,67 @@ html[data-accent="violet"] {
   transform: translateY(0) scale(0.98);
 }
 
+.public-ai-button {
+  background: var(--color-brand-800);
+  color: white;
+  animation: landing-entry-glow 2.4s ease-in-out infinite;
+  transition: transform 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.public-ai-button:hover {
+  transform: translateY(-4px) scale(1.04);
+  background: var(--color-brand-700);
+  box-shadow: 0 16px 32px rgb(127 29 29 / 0.42), 0 0 0 8px rgb(255 82 82 / 0.18);
+}
+
+.assistant-widget-button {
+  border: 1px solid rgb(255 255 255 / 0.28);
+  background: color-mix(in srgb, var(--color-brand-800) 82%, transparent);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  animation: landing-entry-glow 2.6s ease-in-out infinite;
+  transition: transform 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+  touch-action: none;
+}
+
+.assistant-widget-button:hover {
+  transform: translateY(-3px) scale(1.03);
+  background: color-mix(in srgb, var(--color-brand-700) 92%, transparent);
+  box-shadow: 0 16px 32px color-mix(in srgb, var(--color-brand-900) 42%, transparent), 0 0 0 8px color-mix(in srgb, var(--color-brand-300) 18%, transparent);
+}
+
+.ai-thinking-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.ai-thinking-dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--color-brand-500);
+  animation: ai-thinking 1s ease-in-out infinite;
+}
+
+.ai-thinking-dots i:nth-child(2) {
+  animation-delay: 140ms;
+}
+
+.ai-thinking-dots i:nth-child(3) {
+  animation-delay: 280ms;
+}
+
+.ai-thinking-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--color-brand-300) 8%, transparent), transparent 58%);
+  box-shadow: inset 0 0 100px color-mix(in srgb, var(--color-brand-500) 20%, transparent);
+  animation: ai-screen-glow 1.4s ease-in-out infinite alternate;
+}
+
 .animate-logo-in {
   animation: logo-in 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
@@ -372,6 +433,28 @@ html[data-accent="violet"] {
   }
   to {
     transform: translateX(calc(-50% - 2rem));
+  }
+}
+
+@keyframes ai-thinking {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes ai-screen-glow {
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 1;
   }
 }
 

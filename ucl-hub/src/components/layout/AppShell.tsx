@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { ChevronDown, LogOut, Menu, ShieldCheck, Sparkles, X } from "lucide-react";
+import { ChevronDown, LogOut, Menu, ShieldCheck, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -15,6 +15,7 @@ import { isStaffOrAdmin } from "@/lib/permissions";
 import { STAFF_ROLE_LABELS } from "@/types";
 import { cn } from "@/utils/cn";
 import { Dock } from "./Dock";
+import { AssistantWidget } from "./AssistantWidget";
 import { EmergencyBanner } from "./EmergencyBanner";
 import { NotificationBell } from "./NotificationBell";
 import { OfflineBanner } from "./OfflineBanner";
@@ -178,8 +179,6 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
     .flatMap((group) => group.items)
     .filter((item) => !item.capability || can(item.capability))
     .slice(0, 5);
-  const assistantHref = area === "admin" ? "/admin/assistant" : "/assistant";
-
   const dockItems = area === "admin" ? ADMIN_DOCK.filter((item) => !item.capability || can(item.capability)) : STUDENT_DOCK;
 
   const sidebar = (
@@ -239,14 +238,7 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
 
       <Dock items={dockItems} pathname={pathname} />
 
-      <Link
-        href={area === "admin" ? "/admin/assistant" : "/assistant"}
-        aria-label="Ask the AI assistant"
-        title="Ask the AI assistant"
-        className="animate-glow fixed bottom-24 right-4 z-40 flex size-14 items-center justify-center rounded-full bg-brand-800 text-white transition-transform hover:scale-105 hover:bg-brand-700 sm:right-6"
-      >
-        <Sparkles className="size-6" aria-hidden="true" />
-      </Link>
+      <AssistantWidget />
     </div>
   );
 }

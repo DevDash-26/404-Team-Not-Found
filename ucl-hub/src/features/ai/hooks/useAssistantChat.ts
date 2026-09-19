@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useCurrentUser } from "@/components/providers/AuthProvider";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { useServices } from "@/components/providers/ServicesProvider";
 import { AI, STORAGE_KEYS } from "@/config/app";
 import { toUserMessage } from "@/utils/errors";
@@ -46,10 +46,18 @@ function load(uid: string): Stored {
  * (sessionStorage), never leaves the device except as questions to the assistant,
  * and stale answers from a cleared conversation are ignored.
  */
-export function useAssistantChat() {
+export function useAssistantChat(options?: { profile?: AssistantProfile; storageId?: string }) {
   const { assistant } = useServices();
-  const { user, profile, access } = useCurrentUser();
-  const [state, setState] = useState<Stored>(() => load(user.uid));
+  const { user, profile, access } = useAuth();
+  const storageId = options?.storageId ?? user?.uid ?? "public";
+  const assistantProfile: AssistantProfile = options?.profile ?? {
+    name: profile?.name ?? "Visitor",
+    role: access?.role === "student" ? "student" : (access?.staffRole ?? access?.role ?? "student"),
+    faculty: profile?.faculty ?? null,
+    programme: profile?.programme ?? null,
+    year: profile?.year ?? null,
+  };
+  const [state, setState] = useState<Stored>(() => load(storageId));
   const [pending, setPending] = useState(false);
   const generation = useRef(0);
   const stateRef = useRef(state);
@@ -57,26 +65,18 @@ export function useAssistantChat() {
   useEffect(() => {
     stateRef.current = state;
     try {
-      sessionStorage.setItem(storageKey(user.uid), JSON.stringify({ next: state.next, messages: state.messages.slice(-MAX_STORED) }));
+      sessionStorage.setItem(storageKey(storageId), JSON.stringify({ next: state.next, messages: state.messages.slice(-MAX_STORED) }));
     } catch {
       // Storage full or blocked: the chat still works for this page view.
     }
-  }, [state, user.uid]);
-
-  const assistantProfile: AssistantProfile = {
-    name: profile.name,
-    role: access.role === "student" ? "student" : (access.staffRole ?? access.role),
-    faculty: profile.faculty,
-    programme: profile.programme,
-    year: profile.year,
-  };
+  }, [state, storageId]);
   const profileRef = useRef(assistantProfile);
   useEffect(() => {
     profileRef.current = assistantProfile;
   });
 
   const send = useCallback(
-    async (text: string) => {
+    async (text: string, delayMs = 5000) => {
       const message = text.replace(/\s+/g, " ").trim();
       if (!message || pending) return;
       if (message.length > AI.maxQuestionChars) {
@@ -93,6 +93,11 @@ export function useAssistantChat() {
       setPending(true);
 
       try {
+        if (delayMs > 0) await new Promise((resolve) => window.setTimeout(resolve, delayMs));
+        if (ticket !== generation.current) {
+          setPending(false);
+          return;
+        }
         const response = await assistant.ask({ message, history, profile: profileRef.current });
         if (ticket !== generation.current) return;
         setState((s) => ({ next: s.next + 1, messages: [...s.messages, { id: s.next, role: "assistant", content: response.answer, response }] }));

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { VideoBackground } from "@/components/layout/VideoBackground";
+import { AssistantWidget } from "@/components/layout/AssistantWidget";
 import { LinkButton } from "@/components/ui/Button";
 import { homeFor } from "@/lib/redirect";
 
@@ -50,6 +51,8 @@ export default function RootPage() {
           </LinkButton>
         </div>
       )}
+
+      <AssistantWidget />
     </div>
   );
 }

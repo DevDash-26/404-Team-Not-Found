@@ -8,10 +8,12 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/utils/cn";
+import { useAssistantName } from "@/hooks/useAssistantName";
 
 export default function SettingsPage() {
   const { theme, toggle, accent, setAccent } = useTheme();
   const { signOut } = useAuth();
+  const { name, saveName, defaultName } = useAssistantName();
   const router = useRouter();
 
   return (
@@ -52,6 +54,17 @@ export default function SettingsPage() {
                   />
                 ))}
               </div>
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title="AI assistant" description="Choose the name shown on your personal assistant widget." />
+          <CardBody>
+            <label htmlFor="assistant-name" className="text-sm font-medium text-slate-900">Assistant name</label>
+            <div className="mt-2 flex gap-2">
+              <input id="assistant-name" defaultValue={name} key={name} maxLength={40} className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-brand-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100" onBlur={(event) => saveName(event.currentTarget.value)} />
+              <span className="self-center text-xs text-slate-500">Default: {defaultName}</span>
             </div>
           </CardBody>
         </Card>

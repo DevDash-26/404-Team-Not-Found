@@ -101,16 +101,24 @@ export function buildLostFound({ at, day }: DemoContext): DemoCollection {
 
 export function buildRooms(): DemoCollection {
   const rooms: Room[] = [
-    { id: "room-a101", name: "A101 Lecture Hall", building: "Block A", floor: 1, capacity: 120, type: "lecture-hall", facilities: ["Projector", "Microphone", "Air conditioning", "Recording"], active: true },
-    { id: "room-a102", name: "A102 Lecture Hall", building: "Block A", floor: 1, capacity: 60, type: "lecture-hall", facilities: ["Projector", "Whiteboard", "Air conditioning"], active: true },
-    { id: "room-b201", name: "B201 Study Room", building: "Block B", floor: 2, capacity: 8, type: "study-room", facilities: ["Whiteboard", "Power sockets", "Air conditioning"], active: true },
-    { id: "room-b202", name: "B202 Study Room", building: "Block B", floor: 2, capacity: 8, type: "study-room", facilities: ["Whiteboard", "Power sockets"], active: true },
-    { id: "room-b203", name: "B203 Study Room", building: "Block B", floor: 2, capacity: 10, type: "study-room", facilities: ["Large screen", "Whiteboard", "Power sockets", "Air conditioning"], active: true },
-    { id: "room-c301", name: "C301 Computer Lab", building: "Block C", floor: 3, capacity: 40, type: "computer-lab", facilities: ["40 PCs", "Projector", "Air conditioning"], active: true },
-    { id: "room-c302", name: "C302 Computer Lab", building: "Block C", floor: 3, capacity: 30, type: "computer-lab", facilities: ["30 PCs", "Projector"], active: true },
-    { id: "room-d110", name: "D110 Seminar Room", building: "Block D", floor: 1, capacity: 25, type: "seminar-room", facilities: ["Projector", "Movable tables", "Air conditioning"], active: true },
-    { id: "room-d111", name: "D111 Seminar Room", building: "Block D", floor: 1, capacity: 20, type: "seminar-room", facilities: ["Large screen", "Whiteboard"], active: true },
-    { id: "room-lib1", name: "Library Discussion Room 1", building: "Library", floor: 1, capacity: 6, type: "study-room", facilities: ["Whiteboard", "Quiet zone"], active: true },
+    { id: "room-101", name: "Classroom 101", building: "Main Building", floor: 1, capacity: 40, type: "lecture-hall", facilities: ["Projector", "Whiteboard", "Air conditioning"], active: true },
+    { id: "room-102", name: "Classroom 102", building: "Main Building", floor: 1, capacity: 40, type: "lecture-hall", facilities: ["Projector", "Whiteboard", "Air conditioning"], active: true },
+    { id: "room-201", name: "Classroom 201", building: "Main Building", floor: 2, capacity: 35, type: "study-room", facilities: ["Whiteboard", "Power sockets", "Air conditioning"], active: true },
+    { id: "room-202", name: "Classroom 202", building: "Main Building", floor: 2, capacity: 35, type: "study-room", facilities: ["Whiteboard", "Power sockets"], active: true },
+    { id: "room-203", name: "Classroom 203", building: "Main Building", floor: 2, capacity: 35, type: "study-room", facilities: ["Whiteboard", "Power sockets", "Air conditioning"], active: true },
+    { id: "room-204", name: "Classroom 204", building: "Main Building", floor: 2, capacity: 35, type: "study-room", facilities: ["Whiteboard", "Power sockets"], active: true },
+    { id: "room-205", name: "Classroom 205", building: "Main Building", floor: 2, capacity: 35, type: "study-room", facilities: ["Whiteboard", "Power sockets"], active: true },
+    { id: "room-206", name: "Classroom 206", building: "Main Building", floor: 2, capacity: 35, type: "study-room", facilities: ["Whiteboard", "Power sockets", "Air conditioning"], active: true },
+    { id: "room-it-lab-1", name: "IT Lab 1", building: "Labs Building", floor: 1, capacity: 30, type: "computer-lab", facilities: ["30 PCs", "Projector", "Air conditioning"], active: true },
+    { id: "room-it-lab-2", name: "IT Lab 2", building: "Labs Building", floor: 1, capacity: 30, type: "computer-lab", facilities: ["30 PCs", "Projector", "Air conditioning"], active: true },
+    { id: "room-bio-lab-1", name: "Bio Lab 1", building: "Labs Building", floor: 2, capacity: 24, type: "seminar-room", facilities: ["Lab benches", "Safety equipment", "Air conditioning"], active: true },
+    { id: "room-chem-lab-1", name: "Chemistry Lab 1", building: "Labs Building", floor: 2, capacity: 24, type: "seminar-room", facilities: ["Lab benches", "Safety equipment", "Fume hood"], active: true },
+    { id: "room-engineering-lab-1", name: "Engineering Lab 1", building: "Labs Building", floor: 3, capacity: 24, type: "seminar-room", facilities: ["Workshop benches", "Safety equipment", "Projector"], active: true },
+    { id: "room-board-1", name: "Board Room 1", building: "Administration Building", floor: 1, capacity: 12, type: "seminar-room", facilities: ["Large screen", "Conference table", "Video conferencing"], active: true },
+    { id: "room-board-2", name: "Board Room 2", building: "Administration Building", floor: 1, capacity: 12, type: "seminar-room", facilities: ["Large screen", "Conference table", "Video conferencing"], active: true },
+    { id: "room-501", name: "Classroom 501", building: "Main Building", floor: 5, capacity: 40, type: "lecture-hall", facilities: ["Projector", "Whiteboard", "Air conditioning"], active: true },
+    { id: "room-502", name: "Classroom 502", building: "Main Building", floor: 5, capacity: 40, type: "lecture-hall", facilities: ["Projector", "Whiteboard", "Air conditioning"], active: true },
+    { id: "room-503", name: "Classroom 503", building: "Main Building", floor: 5, capacity: 40, type: "lecture-hall", facilities: ["Projector", "Whiteboard", "Air conditioning"], active: true },
   ];
   return toCollection(rooms);
 }
@@ -131,14 +139,14 @@ interface BookingSeed {
 
 export function buildBookings({ at, day }: DemoContext): { bookings: DemoCollection; roomSlots: DemoCollection } {
   const seeds: BookingSeed[] = [
-    { id: "bk-1", roomId: "room-b201", roomName: "B201 Study Room", requester: "u-student2", dayOffset: 1, start: "10:00", end: "12:00", attendees: 5, purpose: "Marketing group assignment", status: "approved" },
-    { id: "bk-2", roomId: "room-b201", roomName: "B201 Study Room", requester: "u-student5", dayOffset: 1, start: "14:00", end: "15:30", attendees: 4, purpose: "Accounting study group", status: "pending" },
-    { id: "bk-3", roomId: "room-d110", roomName: "D110 Seminar Room", requester: "u-student4", dayOffset: 1, start: "15:00", end: "17:00", attendees: 12, purpose: "Data Science club planning session", status: "approved" },
-    { id: "bk-4", roomId: "room-b201", roomName: "B201 Study Room", requester: "u-student1", dayOffset: 2, start: "16:00", end: "17:30", attendees: 5, purpose: "Group project stand-up", status: "approved", decisionNote: "Approved. Please leave the room tidy." },
-    { id: "bk-5", roomId: "room-b202", roomName: "B202 Study Room", requester: "u-student1", dayOffset: 3, start: "13:00", end: "15:00", attendees: 4, purpose: "Database Systems revision", status: "pending" },
-    { id: "bk-6", roomId: "room-b203", roomName: "B203 Study Room", requester: "u-student1", dayOffset: -1, start: "11:00", end: "12:00", attendees: 9, purpose: "Team retrospective", status: "rejected", decisionNote: "The room was reserved for a faculty meeting." },
-    { id: "bk-7", roomId: "room-c301", roomName: "C301 Computer Lab", requester: "u-student3", dayOffset: 2, start: "09:00", end: "11:00", attendees: 20, purpose: "CAD practice session", status: "approved" },
-    { id: "bk-8", roomId: "room-lib1", roomName: "Library Discussion Room 1", requester: "u-student2", dayOffset: 4, start: "09:00", end: "10:30", attendees: 3, purpose: "Case study discussion", status: "cancelled" },
+    { id: "bk-1", roomId: "room-201", roomName: "Classroom 201", requester: "u-student2", dayOffset: 1, start: "10:00", end: "12:00", attendees: 5, purpose: "Marketing group assignment", status: "approved" },
+    { id: "bk-2", roomId: "room-201", roomName: "Classroom 201", requester: "u-student5", dayOffset: 1, start: "14:00", end: "15:30", attendees: 4, purpose: "Accounting study group", status: "pending" },
+    { id: "bk-3", roomId: "room-board-1", roomName: "Board Room 1", requester: "u-student4", dayOffset: 1, start: "15:00", end: "17:00", attendees: 12, purpose: "Data Science club planning session", status: "approved" },
+    { id: "bk-4", roomId: "room-201", roomName: "Classroom 201", requester: "u-student1", dayOffset: 2, start: "16:00", end: "17:30", attendees: 5, purpose: "Group project stand-up", status: "approved", decisionNote: "Approved. Please leave the room tidy." },
+    { id: "bk-5", roomId: "room-202", roomName: "Classroom 202", requester: "u-student1", dayOffset: 3, start: "13:00", end: "15:00", attendees: 4, purpose: "Database Systems revision", status: "pending" },
+    { id: "bk-6", roomId: "room-203", roomName: "Classroom 203", requester: "u-student1", dayOffset: -1, start: "11:00", end: "12:00", attendees: 9, purpose: "Team retrospective", status: "rejected", decisionNote: "The room was reserved for a faculty meeting." },
+    { id: "bk-7", roomId: "room-it-lab-1", roomName: "IT Lab 1", requester: "u-student3", dayOffset: 2, start: "09:00", end: "11:00", attendees: 20, purpose: "CAD practice session", status: "approved" },
+    { id: "bk-8", roomId: "room-102", roomName: "Classroom 102", requester: "u-student2", dayOffset: 4, start: "09:00", end: "10:30", attendees: 3, purpose: "Case study discussion", status: "cancelled" },
   ];
 
   const bookings: Booking[] = [];
